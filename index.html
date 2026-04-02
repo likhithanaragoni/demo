@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Customer CRUD App</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        input, button { margin: 5px; padding: 5px; }
+        table { border-collapse: collapse; width: 50%; margin-top: 10px; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        button { cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h2>Customer CRUD Application</h2>
+
+    <!-- Add Customer -->
+    <h3>Add Customer</h3>
+    <input type="number" id="customerId" placeholder="ID">
+    <input type="text" id="customerName" placeholder="Name">
+    <button onclick="addCustomer()">Add</button>
+
+    <!-- Update Customer -->
+    <h3>Update Customer</h3>
+    <input type="number" id="updateId" placeholder="ID to Update">
+    <input type="text" id="updateName" placeholder="New Name">
+    <button onclick="updateCustomer()">Update</button>
+
+    <!-- Customer List -->
+    <h3>Customer List</h3>
+    <button onclick="getCustomers()">Show All</button>
+    <table id="customerTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        const apiUrl = "http://localhost:8081/customers";
+
+        // Add Customer
+        function addCustomer() {
+            const id = document.getElementById("customerId").value;
+            const name = document.getElementById("customerName").value;
+            if(!id || !name) { alert("Enter ID and Name"); return; }
+
+            fetch(apiUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: Number(id), name: name })
+            })
+            .then(response => response.json())
+            .then(() => {
+                alert("Customer added!");
+                getCustomers();
+            });
+        }
+
+        // Update Customer
+        function updateCustomer() {
+            const id = document.getElementById("updateId").value;
+            const name = document.getElementById("updateName").value;
+            if(!id || !name) { alert("Enter ID and New Name"); return; }
+
+            fetch(`${apiUrl}/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: name })
+            })
+            .then(response => response.json())
+            .then(() => {
+                alert("Customer updated!");
+                getCustomers();
+            });
+        }
+
+        // Get All Customers
+        function getCustomers() {
+            fetch(apiUrl)
+            .then(response => response.json())
+            .then(data => {
+                const tbody = document.querySelector("#customerTable tbody");
+                tbody.innerHTML = "";
+                data.forEach(c => {
+                    const row = document.createElement("tr");
+
+                    const idCell = document.createElement("td");
+                    idCell.textContent = c.id;
+                    row.appendChild(idCell);
+
+                    const nameCell = document.createElement("td");
+                    nameCell.textContent = c.name;
+                    row.appendChild(nameCell);
+
+                    const actionCell = document.createElement("td");
+                    const delBtn = document.createElement("button");
+                    delBtn.textContent = "Delete";
+                    delBtn.onclick = () => deleteCustomer(c.id);
+                    actionCell.appendChild(delBtn);
+                    row.appendChild(actionCell);
+
+                    tbody.appendChild(row);
+                });
+            });
+        }
+
+        // Delete Customer
+        function deleteCustomer(id) {
+            fetch(`${apiUrl}/${id}`, { method: "DELETE" })
+            .then(() => getCustomers());
+        }
+
+        // Load customers when page opens
+        window.onload = getCustomers;
+    </script>
+</body>
+</html>
